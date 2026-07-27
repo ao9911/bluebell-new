@@ -1,6 +1,7 @@
 package snowflake
 
 import (
+	"fmt"
 	"time"
 
 	sf "github.com/bwmarrin/snowflake"
@@ -9,7 +10,9 @@ import (
 var node *sf.Node
 
 func init() {
-	InitSF("2020-01-01", 1)
+	if err := InitSF("2020-01-01", 1); err != nil {
+		panic(fmt.Sprintf("init snowflake: %v", err))
+	}
 }
 
 func InitSF(startTime string, machineID int64) (err error) {
