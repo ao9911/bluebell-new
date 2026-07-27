@@ -1,0 +1,16 @@
+# Go
+*.exe
+*.test
+*.out
+vendor/
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Mac
+.DS_Store
+
+# claude
+.claude/

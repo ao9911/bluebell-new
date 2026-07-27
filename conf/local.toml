@@ -1,0 +1,29 @@
+env = "local"
+
+[log]
+appName = "bluebell-new"
+logPath = "./logs/"
+debug = true
+multiFile = true
+
+[httpServer]
+addr = ":8080"
+readTimeout = "1m"
+writeTimeout = "1m"
+
+[mysql]
+debugMode = true
+driverName = "mysql"
+dsn = "admin:123456@tcp(127.0.0.1:3306)/bluebell-new?charset=utf8mb4&parseTime=true&loc=Local"
+maxIdleConns = 100
+maxOpenConns = 100
+maxLifeTime = "1m"
+maxIdleTime = "1m"
+
+[redis]
+addrs = ["127.0.0.1:63797"]
+password = ""
+poolSize = 100
+
+[auth]
+jwt_expire = 8760
