@@ -7,12 +7,12 @@ import (
 	"github.com/ao9911/go-matrix/response"
 	"github.com/gin-gonic/gin"
 
-	"github.com/ao9911/bluebell-new/api"
+	v1 "github.com/ao9911/bluebell-new/api/user/v1"
 	"github.com/ao9911/bluebell-new/pkg/ecode"
 )
 
 func SignUp(c *gin.Context) {
-	var param api.SignupRequest
+	var param v1.SignupRequest
 	// 获取参数&参数校验
 	if err := c.ShouldBindJSON(&param); err != nil {
 		log.Error("SignUp invalid param failed: %v", err)
@@ -35,7 +35,7 @@ func SignUp(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	var param api.LoginRequest
+	var param v1.LoginRequest
 	// 获取参数&参数校验
 	if err := c.ShouldBindJSON(&param); err != nil {
 		log.Error("Login invalid param failed: %v", err)

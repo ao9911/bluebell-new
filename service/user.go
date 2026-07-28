@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/ao9911/bluebell-new/api"
+	v1 "github.com/ao9911/bluebell-new/api/user/v1"
 	"github.com/ao9911/bluebell-new/model"
 	"github.com/ao9911/bluebell-new/pkg/ecode"
 	"github.com/ao9911/bluebell-new/pkg/jwt"
@@ -11,7 +11,7 @@ import (
 	"github.com/ao9911/bluebell-new/pkg/util"
 )
 
-func (s *Service) SignUp(ctx context.Context, param *api.SignupRequest) (*api.SignupResponse, error) {
+func (s *Service) SignUp(ctx context.Context, param *v1.SignupRequest) (*v1.SignupResponse, error) {
 	// 判断用户是否存在
 	if err := s.dao.CheckUserExist(ctx, param.Username); err != nil {
 		return nil, err
@@ -28,13 +28,13 @@ func (s *Service) SignUp(ctx context.Context, param *api.SignupRequest) (*api.Si
 		return nil, err
 	}
 	// 返回结果
-	return &api.SignupResponse{
+	return &v1.SignupResponse{
 		UserID:   user.UserID,
 		Username: user.Username,
 	}, nil
 }
 
-func (s *Service) Login(ctx context.Context, param *api.LoginRequest) (*api.LoginResponse, error) {
+func (s *Service) Login(ctx context.Context, param *v1.LoginRequest) (*v1.LoginResponse, error) {
 	// 查询用户信息
 	user, err := s.dao.GetUserByUsername(ctx, param.Username)
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *Service) Login(ctx context.Context, param *api.LoginRequest) (*api.Logi
 		return nil, err
 	}
 	// 返回结果
-	return &api.LoginResponse{
+	return &v1.LoginResponse{
 		Token: token,
 	}, nil
 }
