@@ -36,7 +36,8 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	Expire int64 `toml:"jwt_expire"`
+	AccessExpire  int64 `toml:"access_expire"`
+	RefreshExpire int64 `toml:"refresh_expire"`
 }
 
 func init() {

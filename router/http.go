@@ -23,6 +23,15 @@ func startHttp(c *conf.Config) {
 	v1 := r.Group("/api/v1")
 	v1.POST("/signup", SignUp)
 	v1.POST("/login", Login)
+	v1.POST("/refresh_token", RefreshToken)
+
+	v1.Use(JWTAuthMiddleware())
+	v1.GET("/ping", func(c *gin.Context) {
+		userID, _ := c.Get(CtxUserIDKey)
+		c.JSON(http.StatusOK, gin.H{
+			"message": userID,
+		})
+	})
 
 	c.HttpServer.Handler = r
 	httpserver.Run(c.HttpServer)

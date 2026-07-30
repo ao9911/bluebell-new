@@ -1,6 +1,7 @@
 package dao
 
 import (
+	xredis "github.com/ao9911/go-matrix/cache/redis"
 	xgorm "github.com/ao9911/go-matrix/database/gorm"
 	"gorm.io/gorm"
 
@@ -8,13 +9,14 @@ import (
 )
 
 type Dao struct {
-	mysql *gorm.DB
-	// TODO 添加其他连接
+	mysql       *gorm.DB
+	redisClient *xredis.RedisStorage
 }
 
 func New(c *conf.Config) (d *Dao) {
 	d = &Dao{
-		mysql: xgorm.NewORM(c.Mysql),
+		mysql:       xgorm.NewORM(c.Mysql),
+		redisClient: xredis.NewRedisClient(c.Redis),
 	}
 	return
 }

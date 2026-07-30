@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS `bluebell-new`
+    DEFAULT CHARACTER SET = 'utf8mb4';
