@@ -21,9 +21,10 @@ maxLifeTime = "1m"
 maxIdleTime = "1m"
 
 [redis]
-addrs = ["127.0.0.1:63797"]
+addrs = ["127.0.0.1:6379"]
 password = ""
 poolSize = 100
 
 [auth]
-jwt_expire = 8760
+access_expire = 8760
+refresh_expire = 876000

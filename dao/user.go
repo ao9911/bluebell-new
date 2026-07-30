@@ -7,7 +7,11 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ao9911/bluebell-new/model"
-	"github.com/ao9911/bluebell-new/pkg/ecode"
+)
+
+var (
+	ErrUserExist    = errors.New("user exist")
+	ErrUserNotFound = errors.New("user not found")
 )
 
 // 判断用户是否存在
@@ -17,7 +21,7 @@ func (d *Dao) CheckUserExist(ctx context.Context, username string) error {
 		return err
 	}
 	if count > 0 {
-		return ecode.UserExist
+		return ErrUserExist
 	}
 	return nil
 }
@@ -36,7 +40,7 @@ func (d *Dao) GetUserByUsername(ctx context.Context, username string) (*model.Us
 	if err := d.mysql.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
 		// 判断是否存在记录
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ecode.UserNotFound
+			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}

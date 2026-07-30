@@ -1,56 +1,111 @@
 package jwt
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/ao9911/bluebell-new/conf"
 )
 
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+
+	issuer = "bluebell-new"
+	jtiLen = 16
+)
+
 var mySecret = []byte("123456")
 
-// MyClaims 自定义声明结构体并内嵌jwt.StandardClaims
-// jwt包自带的jwt.StandardClaims只包含了官方字段
-// 我们这里需要额外记录一个username字段，所以要自定义结构体
-// 如果想要保存更多信息，都可以添加到这个结构体中
+var (
+	ErrInvalidToken     = errors.New("invalid token")
+	ErrInvalidTokenType = errors.New("invalid token type")
+)
+
+// MyClaims is the shared JWT claims payload for access and refresh tokens.
 type MyClaims struct {
-	UserID   int64  `json:"user_id"`
-	Username string `json:"username"`
-	jwt.StandardClaims
+	UserID    int64  `json:"user_id"`
+	TokenType string `json:"token_type"`
+	jwt.RegisteredClaims
 }
 
-// GenToken 生成JWT
-func GenToken(conf *conf.Config, userID int64, username string) (string, error) {
-	// 创建一个我们自己的声明的数据
-	c := MyClaims{
-		userID,
-		username, // 自定义字段
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(
-				time.Duration(conf.Auth.Expire) * time.Hour).Unix(), // 过期时间
-			Issuer: "bluebell", // 签发人
+// GenToken creates a stateless access token and a stateful refresh token.
+func GenToken(conf *conf.Config, userID int64) (accessToken, refreshToken, refreshJTI string, err error) {
+	accessToken, _, err = genTokenWithJTI(userID, TokenTypeAccess, conf.Auth.AccessExpire)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	refreshToken, refreshJTI, err = genTokenWithJTI(userID, TokenTypeRefresh, conf.Auth.RefreshExpire)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return accessToken, refreshToken, refreshJTI, nil
+}
+
+func genTokenWithJTI(userID int64, tokenType string, expireSeconds int64) (string, string, error) {
+	// 生成jti
+	buf := make([]byte, jtiLen)
+	if _, err := rand.Read(buf); err != nil {
+		return "", "", err
+	}
+	jti := hex.EncodeToString(buf)
+
+	// 生成token
+	claims := MyClaims{
+		UserID:    userID,
+		TokenType: tokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
+			Issuer:    issuer,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expireSeconds) * time.Second)),
 		},
 	}
-	// 使用指定的签名方法创建签名对象
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	// 使用指定的secret签名并获得完整的编码后的字符串token
-	return token.SignedString(mySecret)
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(mySecret)
+	if err != nil {
+		return "", "", err
+	}
+	return token, jti, nil
 }
 
-// ParseToken 解析JWT
-func ParseToken(tokenString string) (*MyClaims, error) {
-	// 解析token
-	var mc = new(MyClaims)
-	token, err := jwt.ParseWithClaims(tokenString, mc, func(token *jwt.Token) (i interface{}, err error) {
-		return mySecret, nil
-	})
+// ParseAccessToken parses and validates an access token.
+func ParseAccessToken(tokenString string) (*MyClaims, error) {
+	return parseTypedToken(tokenString, TokenTypeAccess)
+}
+
+// ParseRefreshToken parses and validates a refresh token.
+func ParseRefreshToken(tokenString string) (*MyClaims, error) {
+	return parseTypedToken(tokenString, TokenTypeRefresh)
+}
+
+func parseTypedToken(tokenString, tokenType string) (*MyClaims, error) {
+	claims := new(MyClaims)
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			if token.Method != jwt.SigningMethodHS256 {
+				return nil, ErrInvalidToken
+			}
+			return mySecret, nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
-	if token.Valid { // 校验token
-		return mc, nil
+	if token == nil || !token.Valid {
+		return nil, ErrInvalidToken
 	}
-	return nil, errors.New("invalid token")
+	if claims.TokenType != tokenType {
+		return nil, ErrInvalidTokenType
+	}
+	return claims, nil
 }

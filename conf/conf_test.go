@@ -47,11 +47,12 @@ func TestMysql(t *testing.T) {
 
 // go test -v -run TestRedis
 func TestRedis(t *testing.T) {
-	t.Logf("Redis.Addrs: %s", Conf.Redis.Addrs)
+	t.Logf("Redis.Addrs: %v", Conf.Redis.Addrs)
 	t.Logf("Redis.Password: %s", Conf.Redis.Password)
 	t.Logf("Redis.PoolSize: %d", Conf.Redis.PoolSize)
 }
 
 func TestAuth(t *testing.T) {
-	t.Logf("Auth.Expire: %d", Conf.Auth.Expire)
+	t.Logf("Auth.AccessExpire: %d", Conf.Auth.AccessExpire)
+	t.Logf("Auth.RefreshExpire: %d", Conf.Auth.RefreshExpire)
 }
