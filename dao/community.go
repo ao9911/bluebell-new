@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrCommunityNotFound = errors.New("Community not found")
+var ErrCommunityNotFound = errors.New("community not found")
 
 func (d *Dao) GetCommunityList(ctx context.Context) ([]*model.Community, error) {
 	// 查询社区列表
