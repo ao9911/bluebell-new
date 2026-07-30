@@ -14,6 +14,7 @@ var (
 	InvalidToken        = xecode.New(10004) // token无效
 	NeedLogin           = xecode.New(10005) // 需要登录
 	InvalidRefreshToken = xecode.New(10006) // 刷新token无效
+	CommunityNotFound   = xecode.New(10007) // 社区不存在
 )
 
 // Corresponding messages.
@@ -28,5 +29,6 @@ func init() {
 		10004: "token无效",
 		10005: "需要登录",
 		10006: "刷新token无效",
+		10007: "社区不存在",
 	})
 }
