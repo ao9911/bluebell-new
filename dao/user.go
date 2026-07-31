@@ -17,7 +17,8 @@ var (
 // 判断用户是否存在
 func (d *Dao) CheckUserExist(ctx context.Context, username string) error {
 	var count int64
-	if err := d.mysql.WithContext(ctx).Model(&model.User{}).Where("username = ?", username).Count(&count).Error; err != nil {
+	err := d.mysql.WithContext(ctx).Model(&model.User{}).Where("username = ?", username).Count(&count).Error
+	if err != nil {
 		return err
 	}
 	if count > 0 {
@@ -28,16 +29,32 @@ func (d *Dao) CheckUserExist(ctx context.Context, username string) error {
 
 // 创建用户
 func (d *Dao) CreateUser(ctx context.Context, user *model.User) error {
-	if err := d.mysql.WithContext(ctx).Create(user).Error; err != nil {
+	err := d.mysql.WithContext(ctx).Create(user).Error
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// 查询用户信息
+// 查询用户信息（名字）
 func (d *Dao) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	var user model.User
-	if err := d.mysql.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
+	err := d.mysql.WithContext(ctx).Where("username = ?", username).First(&user).Error
+	if err != nil {
+		// 判断是否存在记录
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// 查询用户信息（ID）
+func (d *Dao) GetUserByID(ctx context.Context, userID int64) (*model.User, error) {
+	var user model.User
+	err := d.mysql.WithContext(ctx).Where("user_id = ?", userID).First(&user).Error
+	if err != nil {
 		// 判断是否存在记录
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound

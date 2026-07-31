@@ -20,7 +20,7 @@ func (d *Dao) GetCommunityList(ctx context.Context) ([]*model.Community, error) 
 	return communities, nil
 }
 
-func (d *Dao) GetCommunityDetail(ctx context.Context, communityID int64) (*model.Community, error) {
+func (d *Dao) GetCommunityByID(ctx context.Context, communityID int64) (*model.Community, error) {
 	// 查询社区详情
 	var community model.Community
 	err := d.mysql.WithContext(ctx).Where("community_id = ?", communityID).First(&community).Error

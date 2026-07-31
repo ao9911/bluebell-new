@@ -15,6 +15,9 @@ var (
 	NeedLogin           = xecode.New(10005) // 需要登录
 	InvalidRefreshToken = xecode.New(10006) // 刷新token无效
 	CommunityNotFound   = xecode.New(10007) // 社区不存在
+	PostNotFound        = xecode.New(10008) // 帖子不存在
+	VoteTimeExpired     = xecode.New(10009) // 投票时间已过
+	VoteRepeated        = xecode.New(10010) // 不允许重复投票
 )
 
 // Corresponding messages.
@@ -30,5 +33,8 @@ func init() {
 		10005: "需要登录",
 		10006: "刷新token无效",
 		10007: "社区不存在",
+		10008: "帖子不存在",
+		10009: "投票时间已过",
+		10010: "不允许重复投票",
 	})
 }

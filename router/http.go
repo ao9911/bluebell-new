@@ -29,6 +29,12 @@ func startHttp(c *conf.Config) {
 	v1.GET("/community", GetCommunityList)
 	v1.GET("/community/:community_id", GetCommunityDetail)
 
+	v1.POST("/post", CreatePost)
+	v1.GET("/post/:post_id", GetPostDetail)
+	v1.GET("/post", GetPostList)
+
+	v1.POST("/vote", PostVote)
+
 	c.HttpServer.Handler = r
 	httpserver.Run(c.HttpServer)
 }

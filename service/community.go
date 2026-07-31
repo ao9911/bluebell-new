@@ -19,10 +19,10 @@ func (s *Service) GetCommunityList(ctx context.Context) ([]*v1.CommunityListItem
 	}
 	// 返回结果
 	resp := make([]*v1.CommunityListItem, 0, len(communities))
-	for _, community := range communities {
+	for _, c := range communities {
 		resp = append(resp, &v1.CommunityListItem{
-			CommunityID:   community.CommunityID,
-			CommunityName: community.CommunityName,
+			CommunityID:   c.CommunityID,
+			CommunityName: c.CommunityName,
 		})
 	}
 	return resp, nil
@@ -30,12 +30,12 @@ func (s *Service) GetCommunityList(ctx context.Context) ([]*v1.CommunityListItem
 
 func (s *Service) GetCommunityDetail(ctx context.Context, communityID int64) (*v1.CommunityDetail, error) {
 	// 查询社区详情
-	community, err := s.dao.GetCommunityDetail(ctx, communityID)
+	community, err := s.dao.GetCommunityByID(ctx, communityID)
 	if err != nil {
 		if errors.Is(err, dao.ErrCommunityNotFound) {
 			return nil, ecode.CommunityNotFound
 		}
-		log.Errorf("s.dao.GetCommunityDetail error: %v", err)
+		log.Errorf("s.dao.GetCommunityByID error: %v", err)
 		return nil, err
 	}
 	// 返回结果
