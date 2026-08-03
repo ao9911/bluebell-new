@@ -33,11 +33,17 @@ type Config struct {
 	Mysql      *gorm.Config `toml:"mysql"`
 	Redis      *redis.Config
 	Auth       *AuthConfig
+	RateLimit  *RateLimitConfig
 }
 
 type AuthConfig struct {
 	AccessExpire  int64 `toml:"access_expire"`
 	RefreshExpire int64 `toml:"refresh_expire"`
+}
+
+type RateLimitConfig struct {
+	MaxQPS   int `toml:"maxQps"`   // 平均每秒最多请求数
+	MaxBurst int `toml:"maxBurst"` // 突发请求数，允许瞬间超过平均每秒请求数的请求数
 }
 
 func init() {

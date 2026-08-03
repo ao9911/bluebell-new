@@ -1,0 +1,422 @@
+openapi: 3.0.3
+info:
+  title: bluebell-new API
+  version: 1.0.0
+  description: Bluebell Gin HTTP API contract maintained independently from handler comments.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+    description: 用户认证
+  - name: community
+    description: 社区
+  - name: post
+    description: 帖子
+  - name: vote
+    description: 投票
+paths:
+  /signup:
+    post:
+      tags: [auth]
+      summary: 用户注册
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '200':
+          description: 注册结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SignupResponse'
+  /login:
+    post:
+      tags: [auth]
+      summary: 用户登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TokenPair'
+  /refresh_token:
+    post:
+      tags: [auth]
+      summary: 刷新访问令牌
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: 刷新结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TokenPair'
+  /community:
+    get:
+      tags: [community]
+      summary: 社区列表
+      responses:
+        '200':
+          description: 社区列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CommunityListItem'
+  /community/{community_id}:
+    get:
+      tags: [community]
+      summary: 社区详情
+      parameters:
+        - $ref: '#/components/parameters/CommunityID'
+      responses:
+        '200':
+          description: 社区详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CommunityDetail'
+  /post:
+    post:
+      tags: [post]
+      summary: 创建帖子
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '200':
+          description: 创建结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CreatePostResponse'
+    get:
+      tags: [post]
+      summary: 帖子列表
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 帖子列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PostListItem'
+  /post2:
+    get:
+      tags: [post]
+      summary: 帖子列表，支持社区过滤和排序
+      parameters:
+        - $ref: '#/components/parameters/CommunityIDQuery'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: 帖子列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PostListItem'
+  /post/{post_id}:
+    get:
+      tags: [post]
+      summary: 帖子详情
+      parameters:
+        - $ref: '#/components/parameters/PostID'
+      responses:
+        '200':
+          description: 帖子详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PostDetail'
+  /vote:
+    post:
+      tags: [vote]
+      summary: 帖子投票
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VotePostRequest'
+      responses:
+        '200':
+          description: 投票结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    CommunityID:
+      name: community_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 社区 ID，后端按 int64 解析
+    CommunityIDQuery:
+      name: community_id
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+      description: 社区 ID；为空表示不过滤
+    PostID:
+      name: post_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 帖子 ID，后端按 int64 解析
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    Order:
+      name: order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [time, score]
+        default: time
+  schemas:
+    APIResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          format: int32
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          nullable: true
+    SignupRequest:
+      type: object
+      required: [username, password, repassword]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        repassword:
+          type: string
+          format: password
+          description: 必须与 password 相同
+    SignupResponse:
+      type: object
+      required: [user_id, username]
+      properties:
+        user_id:
+          type: string
+          description: 用户 ID，Go JSON tag 使用 string 编码
+        username:
+          type: string
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    CommunityListItem:
+      type: object
+      required: [community_id, community_name]
+      properties:
+        community_id:
+          type: string
+        community_name:
+          type: string
+    CommunityDetail:
+      type: object
+      required: [community_id, community_name, introduction, create_time]
+      properties:
+        community_id:
+          type: string
+        community_name:
+          type: string
+        introduction:
+          type: string
+        create_time:
+          type: string
+          format: date-time
+    CreatePostRequest:
+      type: object
+      required: [community_id, title, content]
+      properties:
+        community_id:
+          type: string
+          description: 社区 ID，Go JSON tag 使用 string 编码
+        title:
+          type: string
+        content:
+          type: string
+    VotePostRequest:
+      type: object
+      required: [post_id, direction]
+      properties:
+        post_id:
+          type: string
+          description: 帖子 ID，Go JSON tag 使用 string 编码
+        direction:
+          type: integer
+          format: int32
+          enum: [-1, 0, 1]
+          description: 1 赞成，0 取消，-1 反对
+    CreatePostResponse:
+      type: object
+      required: [post_id]
+      properties:
+        post_id:
+          type: string
+    PostListItem:
+      type: object
+      required: [post_id, author_name, title, create_time, vote_num, community]
+      properties:
+        post_id:
+          type: string
+        author_name:
+          type: string
+        title:
+          type: string
+        create_time:
+          type: string
+          format: date-time
+        vote_num:
+          type: integer
+          format: int64
+        community:
+          $ref: '#/components/schemas/CommunityDetail'
+    PostDetail:
+      type: object
+      required: [post_id, author_name, title, content, create_time, community]
+      properties:
+        post_id:
+          type: string
+        author_name:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        create_time:
+          type: string
+          format: date-time
+        community:
+          $ref: '#/components/schemas/CommunityDetail'

@@ -28,3 +28,7 @@ poolSize = 100
 [auth]
 access_expire = 8760
 refresh_expire = 876000
+
+[ratelimit]
+maxQps = 100
+maxBurst = 200

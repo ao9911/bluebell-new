@@ -1,11 +1,14 @@
 package router
 
 import (
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ao9911/go-matrix/log"
 	"github.com/ao9911/go-matrix/response"
 	"github.com/gin-gonic/gin"
+	"github.com/juju/ratelimit"
 
 	"github.com/ao9911/bluebell-new/pkg/ecode"
 	"github.com/ao9911/bluebell-new/pkg/jwt"
@@ -40,5 +43,27 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// 将当前请求的 userID 信息保存到请求的上下文 c 上
 		c.Set(CtxUserIDKey, mc.UserID)
 		c.Next() // 后续的处理函数可以通过 c.Get(CtxUserIDKey) 获取当前请求的用户信息
+	}
+}
+
+// RateLimitMiddleware 基于令牌桶算法的限流中间件
+func RateLimitMiddleware(maxQPS int, maxBurst int) gin.HandlerFunc {
+	if maxQPS <= 0 {
+		maxQPS = 100
+	}
+	if maxBurst <= 0 {
+		maxBurst = maxQPS
+	}
+
+	fillInterval := time.Second / time.Duration(maxQPS)
+	bucket := ratelimit.NewBucket(fillInterval, int64(maxBurst))
+
+	return func(c *gin.Context) {
+		if bucket.TakeAvailable(1) != 1 {
+			c.String(http.StatusTooManyRequests, "rate limit...")
+			c.Abort()
+			return
+		}
+		c.Next()
 	}
 }

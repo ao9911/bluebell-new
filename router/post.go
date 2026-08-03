@@ -61,3 +61,20 @@ func GetPostList(c *gin.Context) {
 	// 返回结果
 	response.JSONSuccess(c, data)
 }
+
+func GetPostList2(c *gin.Context) {
+	var param v1.PostListRequest
+	// 获取参数
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.JSONFail(c, ecode.RequestErr, nil)
+		return
+	}
+	// 业务处理
+	data, err := srv.GetPostList2(c, &param)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	// 返回结果
+	response.JSONSuccess(c, data)
+}

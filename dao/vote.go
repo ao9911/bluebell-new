@@ -39,6 +39,65 @@ func (d *Dao) CreatePostRedisIndex(ctx context.Context, postID, communityID int6
 	return err
 }
 
+func (d *Dao) GetPostIDsInOrder(ctx context.Context, page, size int64, order string) ([]string, error) {
+	start, stop := redisPageBounds(page, size)
+	return d.redisClient.ZRevRange(ctx, postOrderRedisKey(order), start, stop).Result()
+}
+
+func (d *Dao) GetCommunityPostIDsInOrder(ctx context.Context, communityID, page, size int64, order string) ([]string, error) {
+	orderKey := postOrderRedisKey(order)
+	communityKey := getRedisKey(keyCommunitySetPF + strconv.FormatInt(communityID, 10))
+	communityOrderKey := orderKey + ":community:" + strconv.FormatInt(communityID, 10)
+	if d.redisClient.DB().Exists(ctx, communityOrderKey).Val() < 1 {
+		pipeline := d.redisClient.DB().TxPipeline()
+		pipeline.ZInterStore(ctx, communityOrderKey, &goredis.ZStore{
+			Keys:      []string{communityKey, orderKey},
+			Aggregate: "MAX",
+		})
+		pipeline.Expire(ctx, communityOrderKey, 60*time.Second)
+		if _, err := pipeline.Exec(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	start, stop := redisPageBounds(page, size)
+	return d.redisClient.ZRevRange(ctx, communityOrderKey, start, stop).Result()
+}
+
+func (d *Dao) GetPostVoteData(ctx context.Context, ids []string) ([]int64, error) {
+	if len(ids) == 0 {
+		return []int64{}, nil
+	}
+
+	pipeline := d.redisClient.DB().Pipeline()
+	commands := make([]*goredis.IntCmd, 0, len(ids))
+	for _, id := range ids {
+		commands = append(commands, pipeline.ZCount(ctx, getRedisKey(keyPostVotedZSetPF+id), "1", "1"))
+	}
+	if _, err := pipeline.Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	votes := make([]int64, 0, len(commands))
+	for _, command := range commands {
+		votes = append(votes, command.Val())
+	}
+	return votes, nil
+}
+
+func redisPageBounds(page, size int64) (start, stop int64) {
+	start = (page - 1) * size
+	stop = start + size - 1
+	return
+}
+
+func postOrderRedisKey(order string) string {
+	if order == "score" {
+		return getRedisKey(keyPostScoreZSet)
+	}
+	return getRedisKey(keyPostTimeZSet)
+}
+
 func (d *Dao) GetPostVoteDirection(ctx context.Context, userID, postID int64) (float64, error) {
 	postIDStr := strconv.FormatInt(postID, 10)
 	userIDStr := strconv.FormatInt(userID, 10)

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/ao9911/go-matrix/log"
@@ -115,6 +116,80 @@ func (s *Service) GetPostList(ctx context.Context, page, size int64) ([]*v1.Post
 			AuthorName: user.Username,
 			Title:      p.Title,
 			CreateTime: p.CreateTime,
+			CommunityDetail: &com_v1.CommunityDetail{
+				CommunityID:   community.CommunityID,
+				CommunityName: community.CommunityName,
+				Introduction:  community.Introduction,
+				CreateTime:    community.CreateTime,
+			},
+		})
+	}
+	return resp, nil
+}
+
+func (s *Service) GetPostList2(ctx context.Context, req *v1.PostListRequest) ([]*v1.PostListItem, error) {
+	if req.CommunityID > 0 {
+		ids, err := s.dao.GetCommunityPostIDsInOrder(ctx, req.CommunityID, req.Page, req.Size, req.Order)
+		if err != nil {
+			log.Errorf("s.dao.GetCommunityPostIDsInOrder error: %v", err)
+			return nil, err
+		}
+		return s.buildPostList2Items(ctx, ids)
+	}
+
+	ids, err := s.dao.GetPostIDsInOrder(ctx, req.Page, req.Size, req.Order)
+	if err != nil {
+		log.Errorf("s.dao.GetPostIDsInOrder error: %v", err)
+		return nil, err
+	}
+	return s.buildPostList2Items(ctx, ids)
+}
+
+func (s *Service) buildPostList2Items(ctx context.Context, ids []string) ([]*v1.PostListItem, error) {
+	if len(ids) == 0 {
+		return []*v1.PostListItem{}, nil
+	}
+
+	posts, err := s.dao.GetPostListByIDs(ctx, ids)
+	if err != nil {
+		log.Errorf("s.dao.GetPostListByIDs error: %v", err)
+		return nil, err
+	}
+	voteData, err := s.dao.GetPostVoteData(ctx, ids)
+	if err != nil {
+		log.Errorf("s.dao.GetPostVoteData error: %v", err)
+		return nil, err
+	}
+
+	voteByPostID := make(map[int64]int64, len(ids))
+	for i, id := range ids {
+		postID, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		voteByPostID[postID] = voteData[i]
+	}
+
+	resp := make([]*v1.PostListItem, 0, len(posts))
+	for _, p := range posts {
+		// 查询作者详情
+		user, err := s.dao.GetUserByID(ctx, p.AuthorID)
+		if err != nil {
+			log.Errorf("s.dao.GetUserByID error: %v", err)
+			return nil, err
+		}
+		// 查询社区详情
+		community, err := s.dao.GetCommunityByID(ctx, p.CommunityID)
+		if err != nil {
+			log.Errorf("s.dao.GetCommunityByID error: %v", err)
+			return nil, err
+		}
+		resp = append(resp, &v1.PostListItem{
+			PostID:     p.PostID,
+			AuthorName: user.Username,
+			Title:      p.Title,
+			CreateTime: p.CreateTime,
+			VoteNum:    voteByPostID[p.PostID],
 			CommunityDetail: &com_v1.CommunityDetail{
 				CommunityID:   community.CommunityID,
 				CommunityName: community.CommunityName,
