@@ -89,7 +89,7 @@ func (s *Service) GetPostDetail(ctx context.Context, postID int64) (*v1.PostDeta
 	}, nil
 }
 
-func (s *Service) GetPostList(ctx context.Context, page, size int64) ([]*v1.PostListItem, error) {
+func (s *Service) GetPostList(ctx context.Context, page, size int64) (*v1.PostListResponse, error) {
 	// 查询帖子列表
 	posts, err := s.dao.GetPostList(ctx, page, size)
 	if err != nil {
@@ -124,17 +124,22 @@ func (s *Service) GetPostList(ctx context.Context, page, size int64) ([]*v1.Post
 			},
 		})
 	}
-	return resp, nil
+	return &v1.PostListResponse{
+		List:  resp,
+		Total: int64(len(resp)),
+		Page:  page,
+		Size:  size,
+	}, nil
 }
 
-func (s *Service) GetPostList2(ctx context.Context, req *v1.PostListRequest) ([]*v1.PostListItem, error) {
+func (s *Service) GetPostList2(ctx context.Context, req *v1.PostListRequest) (*v1.PostListResponse, error) {
 	if req.CommunityID > 0 {
 		ids, err := s.dao.GetCommunityPostIDsInOrder(ctx, req.CommunityID, req.Page, req.Size, req.Order)
 		if err != nil {
 			log.Errorf("s.dao.GetCommunityPostIDsInOrder error: %v", err)
 			return nil, err
 		}
-		return s.buildPostList2Items(ctx, ids)
+		return s.buildPostList2Items(ctx, ids, req.Page, req.Size)
 	}
 
 	ids, err := s.dao.GetPostIDsInOrder(ctx, req.Page, req.Size, req.Order)
@@ -142,12 +147,17 @@ func (s *Service) GetPostList2(ctx context.Context, req *v1.PostListRequest) ([]
 		log.Errorf("s.dao.GetPostIDsInOrder error: %v", err)
 		return nil, err
 	}
-	return s.buildPostList2Items(ctx, ids)
+	return s.buildPostList2Items(ctx, ids, req.Page, req.Size)
 }
 
-func (s *Service) buildPostList2Items(ctx context.Context, ids []string) ([]*v1.PostListItem, error) {
+func (s *Service) buildPostList2Items(ctx context.Context, ids []string, page, size int64) (*v1.PostListResponse, error) {
 	if len(ids) == 0 {
-		return []*v1.PostListItem{}, nil
+		return &v1.PostListResponse{
+			List:  []*v1.PostListItem{},
+			Total: 0,
+			Page:  page,
+			Size:  size,
+		}, nil
 	}
 
 	posts, err := s.dao.GetPostListByIDs(ctx, ids)
@@ -198,5 +208,10 @@ func (s *Service) buildPostList2Items(ctx context.Context, ids []string) ([]*v1.
 			},
 		})
 	}
-	return resp, nil
+	return &v1.PostListResponse{
+		List:  resp,
+		Total: int64(len(resp)),
+		Page:  page,
+		Size:  size,
+	}, nil
 }

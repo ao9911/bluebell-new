@@ -30,7 +30,7 @@ func startHttp(c *conf.Config) {
 	v1.POST("/login", Login)
 	v1.POST("/refresh_token", RefreshToken)
 
-	v1.Use(JWTAuthMiddleware())
+	v1.Use(JWTAuthMiddleware(c))
 	v1.GET("/community", GetCommunityList)
 	v1.GET("/community/:community_id", GetCommunityDetail)
 

@@ -26,6 +26,8 @@ password = ""
 poolSize = 100
 
 [auth]
+access_secret = "123456"
+refresh_secret = "654321"
 access_expire = 8760
 refresh_expire = 876000
 

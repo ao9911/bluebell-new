@@ -10,7 +10,7 @@ import (
 	"github.com/ao9911/go-matrix/log"
 )
 
-func (s *Service) GetCommunityList(ctx context.Context) ([]*v1.CommunityListItem, error) {
+func (s *Service) GetCommunityList(ctx context.Context) (*v1.CommunityList, error) {
 	// 查询社区列表
 	communities, err := s.dao.GetCommunityList(ctx)
 	if err != nil {
@@ -25,7 +25,9 @@ func (s *Service) GetCommunityList(ctx context.Context) ([]*v1.CommunityListItem
 			CommunityName: c.CommunityName,
 		})
 	}
-	return resp, nil
+	return &v1.CommunityList{
+		List: resp,
+	}, nil
 }
 
 func (s *Service) GetCommunityDetail(ctx context.Context, communityID int64) (*v1.CommunityDetail, error) {
