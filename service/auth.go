@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/ao9911/go-matrix/auth/jwt"
 	"github.com/ao9911/go-matrix/log"
 
 	v1 "github.com/ao9911/bluebell-new/api/auth/v1"
@@ -44,7 +43,7 @@ func (s *Service) SignUp(ctx context.Context, param *v1.SignupRequest) (*v1.Sign
 	}, nil
 }
 
-func (s *Service) Login(ctx context.Context, auth *jwt.JWT, param *v1.LoginRequest) (*v1.LoginResponse, error) {
+func (s *Service) Login(ctx context.Context, param *v1.LoginRequest) (*v1.LoginResponse, error) {
 	// 查询用户信息
 	user, err := s.dao.GetUserByUsername(ctx, param.Username)
 	if err != nil {
@@ -59,13 +58,13 @@ func (s *Service) Login(ctx context.Context, auth *jwt.JWT, param *v1.LoginReque
 		return nil, ecode.InvalidPassword
 	}
 	// 生成token
-	tokenPair, err := auth.GeneratePair(strconv.FormatInt(user.UserID, 10))
+	tokenPair, err := s.auth.GeneratePair(strconv.FormatInt(user.UserID, 10))
 	if err != nil {
 		log.Errorf("jwt.GenToken error: %v", err)
 		return nil, err
 	}
 	// 解析refresh token
-	refreshClaims, err := auth.ParseRefresh(tokenPair.RefreshToken)
+	refreshClaims, err := s.auth.ParseRefresh(tokenPair.RefreshToken)
 	if err != nil {
 		log.Errorf("jwt.ParseRefreshToken error: %v", err)
 		return nil, err
@@ -82,9 +81,9 @@ func (s *Service) Login(ctx context.Context, auth *jwt.JWT, param *v1.LoginReque
 	}, nil
 }
 
-func (s *Service) RefreshToken(ctx context.Context, auth *jwt.JWT, param *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
+func (s *Service) RefreshToken(ctx context.Context, param *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
 	// 解析refresh token
-	claims, err := auth.ParseRefresh(param.RefreshToken)
+	claims, err := s.auth.ParseRefresh(param.RefreshToken)
 	if err != nil {
 		log.Errorf("jwt.ParseRefreshToken error: %v", err)
 		return nil, ecode.InvalidRefreshToken
@@ -102,13 +101,13 @@ func (s *Service) RefreshToken(ctx context.Context, auth *jwt.JWT, param *v1.Ref
 		return nil, ecode.InvalidRefreshToken
 	}
 	// 更新refresh token
-	tokenPair, err := auth.GeneratePair(claims.Subject)
+	tokenPair, err := s.auth.GeneratePair(claims.Subject)
 	if err != nil {
 		log.Errorf("jwt.GenToken error: %v", err)
 		return nil, err
 	}
 	// 解析新的refresh token
-	newClaims, err := auth.ParseRefresh(tokenPair.RefreshToken)
+	newClaims, err := s.auth.ParseRefresh(tokenPair.RefreshToken)
 	if err != nil {
 		log.Errorf("jwt.ParseRefreshToken error: %v", err)
 		return nil, err

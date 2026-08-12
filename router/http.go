@@ -14,12 +14,14 @@ import (
 	"github.com/ao9911/bluebell-new/service"
 )
 
-var auth *jwt.JWT
-var srv *service.Service
+var (
+	auth *jwt.JWT
+	srv  *service.Service
+)
 
 func startHttp(c *conf.Config) {
 	auth = jwt.NewJWT(c.Auth)
-	srv = service.New(c)
+	srv = service.New(c, auth)
 	r := gin.New()
 	r.UseH2C = true
 	// r.Use(gin.Recovery(), RateLimitMiddleware(c.RateLimit.MaxQPS, c.RateLimit.MaxBurst))

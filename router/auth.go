@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	// 业务处理
-	data, err := srv.Login(c, auth, &param)
+	data, err := srv.Login(c, &param)
 	if err != nil {
 		HandleError(c, err)
 		return
@@ -50,7 +50,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 	// 业务处理
-	data, err := srv.RefreshToken(c, auth, &param)
+	data, err := srv.RefreshToken(c, &param)
 	if err != nil {
 		HandleError(c, err)
 		return
