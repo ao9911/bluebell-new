@@ -6,7 +6,7 @@ import (
 
 	"github.com/ao9911/go-matrix/log"
 
-	v1 "github.com/ao9911/bluebell-new/api/user/v1"
+	v1 "github.com/ao9911/bluebell-new/api/auth/v1"
 	"github.com/ao9911/bluebell-new/dao"
 	"github.com/ao9911/bluebell-new/model"
 	"github.com/ao9911/bluebell-new/pkg/ecode"
@@ -58,7 +58,7 @@ func (s *Service) Login(ctx context.Context, param *v1.LoginRequest) (*v1.LoginR
 		return nil, ecode.InvalidPassword
 	}
 	// 生成token
-	accessToken, refreshToken, refreshJTI, err := jwt.GenToken(s.c, user.UserID)
+	accessToken, refreshToken, refreshJTI, err := jwt.GenToken(s.c.Auth, user.UserID)
 	if err != nil {
 		log.Errorf("jwt.GenToken error: %v", err)
 		return nil, err
@@ -77,7 +77,7 @@ func (s *Service) Login(ctx context.Context, param *v1.LoginRequest) (*v1.LoginR
 
 func (s *Service) RefreshToken(ctx context.Context, param *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
 	// 解析refresh token
-	claims, err := jwt.ParseRefreshToken(param.RefreshToken)
+	claims, err := jwt.ParseRefreshToken(s.c.Auth, param.RefreshToken)
 	if err != nil {
 		log.Errorf("jwt.ParseRefreshToken error: %v", err)
 		return nil, ecode.InvalidRefreshToken
@@ -94,18 +94,15 @@ func (s *Service) RefreshToken(ctx context.Context, param *v1.RefreshTokenReques
 	if userID != claims.UserID {
 		return nil, ecode.InvalidRefreshToken
 	}
-	// 更新refresh token
-	if err := s.dao.DeleteRefreshToken(ctx, claims.ID); err != nil {
-		log.Errorf("s.dao.DeleteRefreshToken error: %v", err)
-		return nil, err
-	}
-	accessToken, refreshToken, refreshJTI, err := jwt.GenToken(s.c, claims.UserID)
+	// 生成新token；Redis未修改前生成失败时，旧refresh token仍可重试
+	accessToken, refreshToken, refreshJTI, err := jwt.GenToken(s.c.Auth, claims.UserID)
 	if err != nil {
 		log.Errorf("jwt.GenToken error: %v", err)
 		return nil, err
 	}
-	if err := s.dao.SaveRefreshToken(ctx, refreshJTI, claims.UserID, s.c.Auth.RefreshExpire); err != nil {
-		log.Errorf("s.dao.SaveRefreshToken error: %v", err)
+	// 在Redis事务中保存新JTI并删除旧JTI
+	if err := s.dao.RotateRefreshToken(ctx, claims.ID, refreshJTI, claims.UserID, s.c.Auth.RefreshExpire); err != nil {
+		log.Errorf("s.dao.RotateRefreshToken error: %v", err)
 		return nil, err
 	}
 	// 返回结果

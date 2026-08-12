@@ -4,7 +4,7 @@ import (
 	"github.com/ao9911/go-matrix/response"
 	"github.com/gin-gonic/gin"
 
-	v1 "github.com/ao9911/bluebell-new/api/user/v1"
+	v1 "github.com/ao9911/bluebell-new/api/auth/v1"
 	"github.com/ao9911/bluebell-new/pkg/ecode"
 )
 
