@@ -21,6 +21,8 @@ paths:
     post:
       tags: [auth]
       summary: 用户注册
+      description: 创建新用户。该接口不需要 Bearer Token；password 与 repassword 必须一致。
+      operationId: signUp
       security: []
       requestBody:
         required: true
@@ -28,9 +30,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SignupRequest'
+            examples:
+              valid:
+                summary: 有效注册参数
+                value:
+                  username: bluebell_user
+                  password: "123456"
+                  repassword: "123456"
       responses:
         '200':
-          description: 注册结果
+          description: 注册结果。业务错误也以 HTTP 200 返回，并通过 code 区分。
           content:
             application/json:
               schema:
@@ -40,10 +49,33 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/SignupResponse'
+              examples:
+                success:
+                  summary: 注册成功
+                  value:
+                    code: 0
+                    message: success
+                    data:
+                      user_id: "883307136742309888"
+                      username: bluebell_user
+                request_error:
+                  summary: 参数校验失败
+                  value:
+                    code: -400
+                    message: 请求错误
+                    data: null
+                user_exists:
+                  summary: 用户名已存在
+                  value:
+                    code: 10001
+                    message: 用户名已存在
+                    data: null
   /login:
     post:
       tags: [auth]
       summary: 用户登录
+      description: 使用用户名和密码换取 access_token 与 refresh_token。该接口不需要 Bearer Token。
+      operationId: login
       security: []
       requestBody:
         required: true
@@ -51,9 +83,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
+            examples:
+              valid:
+                summary: 有效登录参数
+                value:
+                  username: bluebell_user
+                  password: "123456"
       responses:
         '200':
-          description: 登录结果
+          description: 登录结果。业务错误也以 HTTP 200 返回，并通过 code 区分。
           content:
             application/json:
               schema:
@@ -62,11 +100,40 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/TokenPair'
+                        $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  summary: 登录成功
+                  value:
+                    code: 0
+                    message: success
+                    data:
+                      access_token: eyJhbGciOi...
+                      refresh_token: eyJhbGciOi...
+                request_error:
+                  summary: 参数校验失败
+                  value:
+                    code: -400
+                    message: 请求错误
+                    data: null
+                user_not_found:
+                  summary: 用户不存在
+                  value:
+                    code: 10002
+                    message: 用户不存在
+                    data: null
+                invalid_password:
+                  summary: 密码错误
+                  value:
+                    code: 10003
+                    message: 密码错误
+                    data: null
   /refresh_token:
     post:
       tags: [auth]
       summary: 刷新访问令牌
+      description: 使用 refresh_token 轮换并返回新的 access_token 与 refresh_token。该接口不需要 Bearer Token。
+      operationId: refreshToken
       security: []
       requestBody:
         required: true
@@ -74,9 +141,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RefreshTokenRequest'
+            examples:
+              valid:
+                summary: 有效刷新参数
+                value:
+                  refresh_token: eyJhbGciOi...
       responses:
         '200':
-          description: 刷新结果
+          description: 刷新结果。业务错误也以 HTTP 200 返回，并通过 code 区分。
           content:
             application/json:
               schema:
@@ -85,7 +157,28 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/TokenPair'
+                        $ref: '#/components/schemas/RefreshTokenResponse'
+              examples:
+                success:
+                  summary: 刷新成功
+                  value:
+                    code: 0
+                    message: success
+                    data:
+                      access_token: eyJhbGciOi...
+                      refresh_token: eyJhbGciOi...
+                request_error:
+                  summary: 参数校验失败
+                  value:
+                    code: -400
+                    message: 请求错误
+                    data: null
+                invalid_refresh_token:
+                  summary: refresh_token 无效
+                  value:
+                    code: 10006
+                    message: 刷新token无效
+                    data: null
   /community:
     get:
       tags: [community]
@@ -296,13 +389,19 @@ components:
       properties:
         username:
           type: string
+          minLength: 1
+          example: bluebell_user
         password:
           type: string
+          minLength: 1
           format: password
+          example: "123456"
         repassword:
           type: string
+          minLength: 1
           format: password
           description: 必须与 password 相同
+          example: "123456"
     SignupResponse:
       type: object
       required: [user_id, username]
@@ -310,31 +409,51 @@ components:
         user_id:
           type: string
           description: 用户 ID，Go JSON tag 使用 string 编码
+          example: "883307136742309888"
         username:
           type: string
+          example: bluebell_user
     LoginRequest:
       type: object
       required: [username, password]
       properties:
         username:
           type: string
+          minLength: 1
+          example: bluebell_user
         password:
           type: string
+          minLength: 1
           format: password
+          example: "123456"
+    LoginResponse:
+      type: object
+      required: [access_token, refresh_token]
+      properties:
+        access_token:
+          type: string
+          description: JWT access token，用于 Bearer Authorization。
+        refresh_token:
+          type: string
+          description: JWT refresh token，用于调用 /refresh_token 轮换令牌。
     RefreshTokenRequest:
       type: object
       required: [refresh_token]
       properties:
         refresh_token:
           type: string
-    TokenPair:
+          minLength: 1
+          description: 登录或上次刷新得到的 refresh_token。
+    RefreshTokenResponse:
       type: object
       required: [access_token, refresh_token]
       properties:
         access_token:
           type: string
+          description: 新的 JWT access token。
         refresh_token:
           type: string
+          description: 新的 JWT refresh token；旧 refresh_token 会失效。
     CommunityListItem:
       type: object
       required: [community_id, community_name]

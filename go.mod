@@ -3,10 +3,9 @@ module github.com/ao9911/bluebell-new
 go 1.25.1
 
 require (
-	github.com/ao9911/go-matrix v0.0.0-20260727120204-f2ac524bf037
+	github.com/ao9911/go-matrix v0.0.0-20260812032350-74b932553d0b
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.12.0
-	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/juju/ratelimit v1.0.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/redis/go-redis/v9 v9.21.0
@@ -39,6 +38,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

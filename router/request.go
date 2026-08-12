@@ -7,7 +7,7 @@ import (
 )
 
 func getCurrentUserID(c *gin.Context) (int64, bool) {
-	uid, ok := c.Get(CtxUserIDKey)
+	uid, ok := c.Get(CtxSubjectKey)
 	if !ok {
 		return 0, false
 	}

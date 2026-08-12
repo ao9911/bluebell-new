@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ao9911/go-matrix/auth/jwt"
 	"github.com/ao9911/go-matrix/transport/httpserver"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -13,9 +14,11 @@ import (
 	"github.com/ao9911/bluebell-new/service"
 )
 
+var auth *jwt.JWT
 var srv *service.Service
 
 func startHttp(c *conf.Config) {
+	auth = jwt.NewJWT(c.Auth)
 	srv = service.New(c)
 	r := gin.New()
 	r.UseH2C = true
@@ -30,7 +33,7 @@ func startHttp(c *conf.Config) {
 	v1.POST("/login", Login)
 	v1.POST("/refresh_token", RefreshToken)
 
-	v1.Use(JWTAuthMiddleware(c))
+	v1.Use(JWTAuthMiddleware())
 	v1.GET("/community", GetCommunityList)
 	v1.GET("/community/:community_id", GetCommunityDetail)
 

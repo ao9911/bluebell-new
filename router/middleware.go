@@ -10,15 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/ratelimit"
 
-	"github.com/ao9911/bluebell-new/conf"
 	"github.com/ao9911/bluebell-new/pkg/ecode"
-	"github.com/ao9911/bluebell-new/pkg/jwt"
 )
 
-const CtxUserIDKey = "userID"
+const CtxSubjectKey = "userID"
 
 // JWTAuthMiddleware 基于JWT的认证中间件
-func JWTAuthMiddleware(conf *conf.Config) func(c *gin.Context) {
+func JWTAuthMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
@@ -34,7 +32,7 @@ func JWTAuthMiddleware(conf *conf.Config) func(c *gin.Context) {
 			return
 		}
 		// parts[1]是获取到的tokenString
-		mc, err := jwt.ParseAccessToken(conf.Auth, parts[1])
+		mc, err := auth.ParseAccess(parts[1])
 		if err != nil {
 			log.Errorf("jwt.ParseAccessToken error: %v", err)
 			response.JSONFail(c, ecode.InvalidToken, nil)
@@ -42,8 +40,8 @@ func JWTAuthMiddleware(conf *conf.Config) func(c *gin.Context) {
 			return
 		}
 		// 将当前请求的 userID 信息保存到请求的上下文 c 上
-		c.Set(CtxUserIDKey, mc.UserID)
-		c.Next() // 后续的处理函数可以通过 c.Get(CtxUserIDKey) 获取当前请求的用户信息
+		c.Set(CtxSubjectKey, mc.Subject)
+		c.Next() // 后续的处理函数可以通过 c.Get(CtxSubjectKey) 获取当前请求的用户信息
 	}
 }
 
