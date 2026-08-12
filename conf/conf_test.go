@@ -53,6 +53,7 @@ func TestRedis(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
+	t.Logf("Auth.Issuer: %s", Conf.Auth.Issuer)
 	t.Logf("Auth.AccessSecret: %s", Conf.Auth.AccessSecret)
 	t.Logf("Auth.RefreshSecret: %s", Conf.Auth.RefreshSecret)
 	t.Logf("Auth.AccessExpire: %d", Conf.Auth.AccessExpire)

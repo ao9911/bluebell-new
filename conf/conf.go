@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ao9911/go-matrix/auth/jwt"
 	"github.com/ao9911/go-matrix/cache/redis"
 	"github.com/ao9911/go-matrix/database/gorm"
 	"github.com/ao9911/go-matrix/log"
 	"github.com/ao9911/go-matrix/transport/httpserver"
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/ao9911/bluebell-new/pkg/jwt"
 )
 
 var (
@@ -34,7 +33,7 @@ type Config struct {
 	HttpServer *httpserver.Config
 	Mysql      *gorm.Config `toml:"mysql"`
 	Redis      *redis.Config
-	Auth       *jwt.Config
+	Auth       *jwt.Config `toml:"auth"`
 	RateLimit  *RateLimitConfig
 }
 
