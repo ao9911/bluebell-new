@@ -37,10 +37,10 @@ func startHttp(c *conf.Config) {
 
 	v1.Use(JWTAuthMiddleware())
 	v1.GET("/community", GetCommunityList)
-	v1.GET("/community/:community_id", GetCommunityDetail)
+	v1.GET("/community/:community_id", GetCommunity)
 
 	v1.POST("/post", CreatePost)
-	v1.GET("/post/:post_id", GetPostDetail)
+	v1.GET("/post/:post_id", GetPost)
 	v1.GET("/post", GetPostList)
 	v1.GET("/post2", GetPostList2)
 

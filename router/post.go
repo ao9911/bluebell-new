@@ -32,7 +32,7 @@ func CreatePost(c *gin.Context) {
 	response.JSONSuccess(c, data)
 }
 
-func GetPostDetail(c *gin.Context) {
+func GetPost(c *gin.Context) {
 	// 获取参数并转换
 	postID, err := strconv.ParseInt(c.Param("post_id"), 10, 64)
 	if err != nil || postID <= 0 {
